@@ -34,21 +34,10 @@ vhostCreate()
 		echo -e "Fichier $nomProjet.conf créé.\n"
 }
 
-#recupération du nom de l'utilisateur et du chemin d'execution.
-utilisateur=$USER
-path=$PWD
- 
-clear
 
-if [ $utilisateur == 'root' ]; then
-	echo "Ne PAS utiliser la commande 'sudo' pour executer ce script"
-	exit 0
-else
 
-	echo "!!! Attention ce script doit etre placé et executé depuis votre dossier www !!!"
-	  
-	read -p  "Appuyer sur une touche pour continuer ou CTRL-C pour stopper" 
-	echo -e "\n"
+addSite()
+{
 	read -p 'Saisir le nom du projet: ' nomProjet
 #si pas de nom de projet valide, on arrete le script
 	if [ -z $nomProjet ]; then
@@ -89,10 +78,10 @@ else
 
 #ajout d'un lien symbolique dans apache
 	echo -e "\nCréation du lien symbolique dans Apache."
-	read -p 'Patientez un instant...' -t 5 -s temp 
+	read -p 'Patientez un instant...' -t 2 -s temp 
 	echo -e "\n"
 	sudo a2ensite "$nomProjet".conf
-	echo -e "redemarrage du serveur Apache...\n"
+	echo -e "Redemarrage du serveur Apache...\n"
 	sudo service apache2 reload
 	echo -e "Ajout du site au fichier Hosts...\n"
 	cd /etc
@@ -103,5 +92,75 @@ else
 	echo -e "A partir de là vous pouvez afficher la page dans le navigateur avec l'adresse :\n"
 	echo -e "http://$nomProjet\n"
 	exit 0
-fi
 
+}
+
+removeSite()
+{
+	read -p 'Saisir le nom du projet: ' nomProjet
+#si pas de nom de projet valide, on arrete le script
+	if [ -z $nomProjet ]; then
+  		echo "Merci de saisir un nom de projet valide !"
+		echo "arret du script."
+		exit 0
+	fi
+#suppression du lien symbolique dans Apache
+	echo -e "Suppression du lien symbolique dans Apache\n"
+	sudo a2dissite "$nomProjet".conf
+#suppression du fichier .conf	
+	if [ -f "/etc/apache2/sites-available/$nomProjet.conf" ];then
+		echo -e "Suppression /etc/apache2/sites-available/$nomProjet.conf.\n"
+		sudo rm "/etc/apache2/sites-available/$nomProjet.conf"
+		if [ -f "/etc/apache2/sites-available/$nomProjet.conf" ];then
+			echo -e "Suppression...Echec !\n"
+		else
+			echo -e "Suppression...Ok !\n"		
+		fi
+	fi
+#suppression de la declaration dans le fichier hosts
+	 
+	echo -e "Suppression de la reference au site dans le fichier hosts.\n"
+	sudo sed -i".bak" "/\<${nomProjet}\>/d" /etc/hosts	
+	echo -e "Suppression...ok (sauvegarde hosts.bak disponnible).\n"
+#redemarrage du service Apache
+	echo -e "Redemarrage du serveur Apache...\n"
+	sudo service apache2 reload
+	echo -e "La configuration du site a bien été supprimé."
+	echo -e "Le dossier du site n'a pas été supprimé."
+	echo -e "Script terminé."	
+}
+
+
+#recupération du nom de l'utilisateur et du chemin d'execution.
+utilisateur=$USER
+path=$PWD
+ 
+clear
+
+if [ $utilisateur == 'root' ]; then
+	echo "Ne PAS utiliser la commande 'sudo' pour executer ce script."
+	exit 0
+else
+
+	echo "!!! Attention ce script doit etre placé et executé depuis votre dossier www !!!"
+	  
+	read -p  "Appuyer sur une touche pour continuer ou CTRL-C pour annuler" 
+	echo -e "\n*******************************************************"
+	echo -e "*  Créer ou supprimer un vhosts sur un serveur local  *"
+	echo -e "*******************************************************"
+	echo -e "\n"
+	echo -e "1. Ajouter un vhost."
+	echo -e "2. Supprimer un vhost."
+	echo -e "3. Quitter."
+	echo -e "\n"
+	read -p 'Choix : ' choice
+	echo -e "\n"
+
+	while true; do
+	case $choice in
+		[1]* ) addSite; break;;
+		[2]* ) removeSite; break;;
+		* ) echo "Arret du script"; exit;
+	esac
+	done
+fi
