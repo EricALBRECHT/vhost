@@ -1,6 +1,6 @@
-# Creer un vhost local
+# Créer un vhost automatiquement
 
-script permettant de mettre en place un vhost automatiquement.  
+Script permettant de mettre en place un vhost automatiquement.  
   
 Il est à placer dans le dossier racine www.  
 (pour le site monsite.fr se trouvant dans www/monsite.fr, placer le script dans le dossier www. Le dossier monsite.fr sera créé automatiquement).  
